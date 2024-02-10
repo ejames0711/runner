@@ -6,9 +6,12 @@ function _init()
 	plyr.spr=2
 	plyr.timer=0
 	plyr.x=20
-	plyr.y=60
+	plyr.y=85
+	plyr.vy=0
 	
-	gravity=3
+	jmp_press=0
+	
+	gravity=0.4
 	
 	ground={}
 	ground.x=0
@@ -39,20 +42,23 @@ function _init()
 end
 
 function _update()
-
-	//turn off gravity, then use timer to turn back on and apply velocity
-	if btnp(❎) then
-		gravity=0
-		plyr.y-=20
-	else
-		gravity=2
-	end
-	
 	
 	sb.x-=sb.spd
 	
-	if mget(plyr.x/8,(plyr.y+4)/8)~=26 then
-		plyr.y+=gravity
+	if plyr.y==85 then
+		if btnp(❎) then plyr.vy-=5 end
+	end
+	
+	if plyr.y!=85 then
+		plyr.spr
+	end
+	
+	plyr.vy+=gravity
+	plyr.y += plyr.vy
+
+	if plyr.y>85 then
+		plyr.vy-=plyr.vy
+		plyr.y=85
 	end
 	
 	for k,v in pairs(bckgrnd) do
