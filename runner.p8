@@ -2,8 +2,9 @@ pico-8 cartridge // http://www.pico-8.com
 version 41
 __lua__
 function _init()
+	state="play"
+
 	plyr = {}
-	plyr.st="walk"
 	plyr.spr=1
 	plyr.timer=0
 	plyr.x=20
@@ -14,7 +15,7 @@ function _init()
 	
 	ground={}
 	ground.x=0
-	ground.spd=4
+	ground.spd=5
 	
 	hill={} 
 	hill.x=0
@@ -29,7 +30,7 @@ function _init()
 	sb = {}
 	sb.spr=6
 	sb.timer=0
-	sb.spd=2
+	sb.spd=3
 	sb.x=90
 	sb.y=85
 	
@@ -41,19 +42,12 @@ function _init()
 end
 
 function _update()
-	if collision(plyr,sb) then
-		sfx(0)
+	if state == "play" then
+		play_game()
+	elseif state == "end" then
+		end_game()
 	end
 	
-	physics()
-	anim_plyr()
-	
-	sb.x-=sb.spd
-	anim_w_frames(sb,6,8,5)
-	
-	for k,v in pairs(bckgrnd) do
-		upd_bckgrnd(v)
-	end
 	
 	animate_snow()
 end
@@ -64,8 +58,12 @@ function _draw()
 	draw_bckgrnd(50,2,hill,10,16)
 	draw_bckgrnd(0,0,ground)
 	snow()
-	spr(plyr.spr,plyr.x,plyr.y)
-	spr(sb.spr,sb.x,sb.y)
+	if state == "play" then
+		spr(plyr.spr,plyr.x,plyr.y)
+		spr(sb.spr,sb.x,sb.y)
+	elseif state == "end" then
+		print("game over",44,50,7)
+	end
 end
 -->8
 --animations
@@ -92,6 +90,11 @@ function anim_plyr()
 		if plyr.spr < 53 then plyr.spr = 53 end
 		anim_w_frames(plyr,53,57,4)
 	end
+end
+
+function anim_sb()
+	sb.x-=sb.spd
+	anim_w_frames(sb,6,8,5)
 end
 
 
@@ -136,22 +139,23 @@ end
 
 function physics()
 	plyr.vy+=gravity
-	plyr.y += plyr.vy
-
+	plyr.y+=plyr.vy
+	
 	if plyr.y>=85 then
-		plyr.st = "walk"
-		plyr.vy-=plyr.vy
-		plyr.y=85
+			plyr.st = "walk"
+			plyr.vy-=plyr.vy
+			plyr.y=85
 	end
 	
 	if plyr.y==85 then
 		if btnp(❎) then
-			plyr.st = "jump" 
-			plyr.vy-=5 
+			plyr.st = "jump"
+ 		plyr.vy-=5
+ 		sfx(0)
 		end
 	end
- 
 end
+
 
 function collision(a,b)
  local a_left=a.x
@@ -183,13 +187,35 @@ function draw_bckgrnd(celx,cely,obj,sx,sy)
 end
 
 
+-->8
+--state
+
+function play_game()
+	if collision(plyr,sb) then
+		state="end"
+	end
+	physics()
+	anim_plyr()
+	anim_sb()
+	
+	for k,v in pairs(bckgrnd) do
+		upd_bckgrnd(v)
+	end
+end
+
+function end_game()
+	plyr.spr = 0
+	sb.spr = 0
+end
+
+
 __gfx__
 00000000000000000000000000555500000000000000000000cccc0000cccc0000cccc00cc77cccccccc77777777cccc777cccc777777ccc77777777dddddddd
 0000000005555550005555000566665000555500000000000cd777c00c7777c00c7777c0cccccccccccccccccccccccccccccccc7777cccd77777677dddddddd
-007007005666666555666655566667655566665500000000cd77d77cc77d777cc777777cccccccccccdccccccccccccdcccccdcccc7cccdd77777777dddddddd
-000770005666676556666765566667655666676500000000c7777d7cc7d7777cc777777cccccccddddddcccccccdddddccccdddcccccdddd77666777dddddddd
-000770005666676556666765566666655666676500000000c777777cc777777cc7d7777cddddddddddddddddddddddddddddddddccccdddd76677777dddddddd
-007007005666666556666665566666655666666500000000c777777ccd77777cc77d77dcdddddddddddddddddddddddddddddddddddddddd77777777dddddddd
+000000005666666555666655566667655566665500000000cd77d77cc77d777cc777777cccccccccccdccccccccccccdcccccdcccc7cccdd77777777dddddddd
+000000005666676556666765566667655666676500000000c7777d7cc7d7777cc777777cccccccddddddcccccccdddddccccdddcccccdddd77666777dddddddd
+000000005666676556666765566666655666676500000000c777777cc777777cc7d7777cddddddddddddddddddddddddddddddddccccdddd76677777dddddddd
+000000005666666556666665566666655666666500000000c777777ccd77777cc77d77dcdddddddddddddddddddddddddddddddddddddddd77777777dddddddd
 0000000066566655566666656656665556666665000000000c7777c00cd777c00c777dc0dddddddddddddddddddddddddddddddddddddddd77777677dddddddd
 00000000666506600556665066505660055666500000000000cccc0000cccc0000cccc00dddddddddddddddddddddddddddddddddddddddd77777777dddddddd
 0000000550000000000000066000000000000007700000000000000077700000000000077777777777777777dccc7cddddddc77d7767777777777777c7777777
@@ -237,4 +263,8 @@ __map__
 0f1c0f0f0f0f0f0f0f1c0f0f0f0f0f0f0f0f0f0f0f0f0f1b0f0f0f0f1c0f0f0f0f0f0f0f0f0f0f0f0f0f0f1b0f0f0f0f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0f0f0f0f1b0f0f0f0f0f0f0f0f0f0f0f0f0f0f1c0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f1b0f0f0f0f0f0f0f0f0f0f0f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
-000100000f0500f0500f050100501005012050140501505017050190501b0501e050220502405025050270502a0502c0502e05031050340503605039050390503905000000000000000000000000000000000000
+010100000f0500f0500f050100501005012050140501505017050190501b0501e050220502405025050270502a0502c0502e05031050340503605039050390503905000000000000000000000000000000000000
+011000000c5430c5003c600246003c6150c54300500005000c5430c50000500005003c6150c54300500005000c5430c50000500005003c6150c54300500005000c5430c50000500005003c6150c5430050000500
+__music__
+00 01020304
+
