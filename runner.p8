@@ -6,7 +6,7 @@ function _init()
 	game.state="play"
 
 	plyr={}
-	plyr.spr=1
+	plyr.sprite=1
 	plyr.timer=0
 	plyr.x=20
 	plyr.y=85
@@ -29,6 +29,8 @@ function _init()
 	
 	bckgrnd={ground,hill,mnt}
 	
+	snowballs={}
+	
 	lg_sb={}
 	lg_sb.spr=1
 	lg_sb.x=190
@@ -36,12 +38,9 @@ function _init()
 	lg_sb.spd=2
 	lg_sb.frames={43,45,64,66}
 	
-	sb = {}
-	sb.spr=6
-	sb.timer=0
-	sb.spd=3
-	sb.x=150
-	sb.y=85
+	spawn_snowball()
+	
+	spawn_timer=0
 	
 	particles={}
 	
@@ -56,11 +55,16 @@ end
 
 function _update()
 	play_game()
-	anim_snow()
+	for s in all(snowballs) do
+  s:anim()
+	end
 end
 
 function _draw()
 	draw_game()
+	for s in all(snowballs) do
+  s:draw()
+	end
 end
 -->8
 --animations
@@ -69,10 +73,10 @@ function anim_w_frames(object,init_spr,max_spr,frames)
 	if object.timer < frames then
 		object.timer+=1
 	else
-		if object.spr<max_spr then
-			object.spr+=1
+		if object.sprite<max_spr then
+			object.sprite+=1
 		else
-			object.spr=init_spr
+			object.sprite=init_spr
 		end
 		object.timer=0
 	end
@@ -85,16 +89,12 @@ function anim_plyr()
 	end
 	
 	if plyr.st == "jump" then
-		if plyr.spr < 53 then plyr.spr = 53 end
+		if plyr.sprite < 53 then plyr.sprite = 53 end
 		anim_w_frames(plyr,53,57,4)
 	end
 end
 
 --snowball
-function anim_sb()
-	sb.x-=sb.spd
-	anim_w_frames(sb,6,8,5)
-end
 
 function anim_lg_sb()
 	lg_sb.x-=lg_sb.spd
@@ -193,9 +193,8 @@ function physics()
 			plyr.jump_count+=1
 			if plyr.jump_count<=2 then
 				plyr.st = "jump"
-				plyr.vy-=4.5
+				plyr.vy-=4
 	 		sfx(0)
-	 	else
 	 	end
 		end
 	end
@@ -236,16 +235,10 @@ end
   --state
 
 function play_game()
+	anim_snow()
 	if game.state == "play" then
-		if collision(plyr,sb) or collision(plyr,lg_sb) then
-			game.state="end"
-		end
 		physics()
 		anim_plyr()
-		anim_sb()
-		anim_lg_sb()
-		sb_particles(sb)
-		sb_particles(lg_sb)
 		anim_particles()
 		for k,v in pairs(bckgrnd) do
 			upd_bckgrnd(v)
@@ -262,13 +255,40 @@ function draw_game()
 	draw_snow()
 	draw_particles()
 	if game.state == "play" then
-		spr(plyr.spr,plyr.x,plyr.y)
-		spr(sb.spr,sb.x,sb.y)
+		spr(plyr.sprite,plyr.x,plyr.y)
 		spr(lg_sb.frames[flr(lg_sb.spr)],lg_sb.x,lg_sb.y,2,2)
 	elseif game.state == "end" then
 		print("game over",44,50,7)
 	end
 end
+-->8
+--spawn
+function sb_spawn_timer()
+	if spawn_timer < 20 then
+		spawn_timer+=1
+	else
+		spawn_timer=0
+	end
+end
+
+function spawn_snowball()
+	add(snowballs,{
+	sprite=6,
+	timer=0,
+	spd=3,
+	x=130,
+	y=85,
+	draw=function(self)
+		spr(self.sprite,self.x,self.y)
+	end,
+	anim=function(self)
+		self.x-=self.spd
+		anim_w_frames(self,6,8,5)
+	end
+	})
+end
+
+
 __gfx__
 00000000000000000000000000555500000000000000000000cccc0000cccc0000cccc00cc77cccccccc77777777cccc777cccc777777ccc77777777dddddddd
 0000000005555550005555000566665000555500000000000cd777c00c7777c00c7777c0cccccccccccccccccccccccccccccccc7777cccd77777677dddddddd
